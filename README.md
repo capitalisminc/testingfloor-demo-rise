@@ -24,7 +24,7 @@ Open the local URL printed by Vite. Press **Enter** to start or confirm a menu c
 - Compare retries and progress through Desert, Desert / Forest and Forest.
 - Render each full level with `npm run maps`; PNGs and matching pixel-space bounds are in [`maps/`](maps/).
 
-To send to Testing Floor, copy `.env.example` to `.env` and add a telemetry write key from your Testing Floor game before `npm start` or `npm run build`. Without a key, use `riseTelemetry.snapshot()` in the browser console to inspect calls or `riseTelemetry.download()` to save them as JSON; the stub keeps the latest 10,000 entries in memory and sends nothing.
+To send to Testing Floor, copy `.env.example` to `.env` and add a telemetry write key from your Testing Floor game before `npm start` or `npm run build`. The published example is built with the repository's `TESTING_FLOOR_WRITE_KEY` Actions variable. Without a key, use `riseTelemetry.snapshot()` in the browser console to inspect calls or `riseTelemetry.download()` to save them as JSON; the stub keeps the latest 10,000 entries in memory and sends nothing.
 
 The [integration guide](docs/testing-floor.md) covers the gameplay hooks, the SDK adapter, events and map coordinates. `npm run build` produces a static site in `dist/`.
 
