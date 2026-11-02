@@ -10,6 +10,7 @@ export default defineConfig({
     async closeBundle () {
       await cp('assets', 'dist/assets', { recursive: true })
       await cp('LICENSE', 'dist/LICENSE')
+      await cp('node_modules/phaser/license.txt', 'dist/PHASER-LICENSE.txt')
     }
   }],
   build: { chunkSizeWarningLimit: 1500 }
