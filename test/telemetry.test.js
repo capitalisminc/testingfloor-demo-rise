@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { LocalTelemetryStub, TestingFloorAdapter } from '../src/telemetry/sdk-adapter.js'
-import { Client } from '../src/telemetry/testingfloor/client.ts'
+import { Client } from '@testingfloor/browser'
 import { RiseTelemetry, worldPosition } from '../src/telemetry/rise-telemetry.js'
 
 function fixture (stage = 'desert', nextStage = 'forest') {

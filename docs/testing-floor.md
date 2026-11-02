@@ -2,7 +2,7 @@
 
 This example adds gameplay instrumentation to [rise](https://github.com/zzox/rise), a single-player Phaser platformer by zzox. Use it as a reference for placing events at the point where an action actually happens, tracking characters, and matching their positions to a level image.
 
-Telemetry goes through the [Testing Floor browser SDK](https://github.com/capitalisminc/testingfloor-sdk-browser), copied unmodified into [`src/telemetry/testingfloor`](../src/telemetry/testingfloor) from its commit `576b8ab`. The build sends to Testing Floor when `VITE_TESTING_FLOOR_WRITE_KEY` is set (see `.env.example`). Without a key, calls stay in a local, bounded stub and nothing is sent.
+Telemetry goes through the [Testing Floor browser SDK](https://github.com/capitalisminc/testingfloor-sdk-browser), the npm package `@testingfloor/browser`. The build sends to Testing Floor when `VITE_TESTING_FLOOR_WRITE_KEY` is set (see `.env.example`). Without a key, calls stay in a local, bounded stub and nothing is sent.
 
 ## Where to start
 
@@ -17,7 +17,7 @@ Telemetry goes through the [Testing Floor browser SDK](https://github.com/capita
 | `trackEntity(entity)` | Character position and state. `properties.active: false` stops tracking. | A tracked object with the entity's ID and type; its other properties become object state, and the player's position goes on every event. An inactive entity is removed with its final position. |
 | `endSession(reason)` | Completed, quit or restarted. | Sends what is queued. |
 
-The SDK reads the recording from the page URL when Testing Floor opens the game for a recording, asks Testing Floor whether the recording is still open, and sends a completion marker when it ends or the page closes. SDK exceptions and rejected promises are isolated from gameplay. Ordinary tab switching only mutes sound and lets Phaser pause normally.
+The SDK reads the recording from the page URL when Testing Floor opens the game for a recording, asks Testing Floor whether the recording is still open, and sends a completion marker when it ends. On `pagehide`, [`src/index.js`](../src/index.js) ends the run first and then closes the SDK, so `run_ended` goes out with the completion marker. SDK exceptions and rejected promises are isolated from gameplay. Ordinary tab switching only mutes sound and lets Phaser pause normally.
 
 ## Runs, levels and entities
 

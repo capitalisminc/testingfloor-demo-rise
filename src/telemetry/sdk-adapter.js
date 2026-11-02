@@ -1,4 +1,4 @@
-import { createTestingFloor } from './testingfloor/index.ts'
+import { createTestingFloor } from '@testingfloor/browser'
 
 // The build's telemetry write key. Without one, the example keeps everything in
 // the local stub and sends nothing.
@@ -8,7 +8,8 @@ const WRITE_KEY = import.meta.env?.VITE_TESTING_FLOOR_WRITE_KEY ?? ''
 // four methods, and the adapter turns them into Testing Floor SDK calls.
 export function createSdkAdapter () {
   if (!WRITE_KEY || typeof window === 'undefined') return new LocalTelemetryStub()
-  return new TestingFloorAdapter(createTestingFloor({ writeKey: WRITE_KEY, appVersion: '0.1.0' }))
+  // src/index.js closes the SDK on pagehide after the run's final events.
+  return new TestingFloorAdapter(createTestingFloor({ writeKey: WRITE_KEY, appVersion: '0.1.0', closeOnPageHide: false }))
 }
 
 // Sends through the Testing Floor browser SDK. A run is marked by the
