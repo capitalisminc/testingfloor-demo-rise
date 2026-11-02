@@ -170,3 +170,22 @@ test('a retry starts with the new attempt\'s player position, not the previous o
   assert.equal(retry['player.position.x'], retry['position.x'])
   assert.equal(retry['player.position.y'], retry['position.y'])
 })
+
+test('a new run does not carry the previous run\'s level or player position', () => {
+  const bodies = []
+  const client = new Client({
+    writeKey: 'test-only-never-transmitted',
+    flushIntervalSeconds: 1e9,
+    transport: (body, done) => { bodies.push(body); done(200) }
+  })
+  client.start(0)
+  const telemetry = new RiseTelemetry(new TestingFloorAdapter(client))
+  telemetry.startLevel(fixture('forest', 'end'))
+  telemetry.endRun('quit')
+  telemetry.startRun()
+  client.flush()
+  const started = bodies.flatMap(body => JSON.parse(body).events).filter(event => event.$name === 'run_started')[1]
+  assert.ok(started, 'the second run started')
+  assert.equal(started['game_level.id'], undefined)
+  assert.equal(started['player.position.x'], undefined)
+})

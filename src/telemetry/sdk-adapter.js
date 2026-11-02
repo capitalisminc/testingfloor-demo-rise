@@ -24,7 +24,11 @@ export class TestingFloorAdapter {
     client.activitySource = () => (this.player ? { playerPosition: this.player } : null)
   }
 
-  startSession () {}
+  // A new run starts without the previous run's level or player position.
+  startSession () {
+    this.level = null
+    this.player = null
+  }
 
   trackEvent (name, properties) {
     if (properties.level_id) this.level = properties.level_id
