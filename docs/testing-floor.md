@@ -7,7 +7,7 @@ Telemetry goes through the [Testing Floor browser SDK](https://github.com/capita
 ## Where to start
 
 - [`src/telemetry/rise-telemetry.js`](../src/telemetry/rise-telemetry.js): game-specific context, attempts, sampling, entity IDs, progress and coordinate conversion.
-- [`src/telemetry/sdk-adapter.js`](../src/telemetry/sdk-adapter.js): turns the example's four calls into SDK calls. These method names are the example's boundary, not the SDK's API.
+- [`src/telemetry/sdk-adapter.js`](../src/telemetry/sdk-adapter.js): turns the example's five calls into SDK calls. These method names are the example's boundary, not the SDK's API.
 - [`GameScene`](../src/Scenes/GameScene.js), [`Player`](../src/Player/Player.js), and [`Enemies`](../src/Enemies): hooks where gameplay succeeds, fails or changes level.
 
 | Call | Meaning | With the SDK |
@@ -15,6 +15,7 @@ Telemetry goes through the [Testing Floor browser SDK](https://github.com/capita
 | `startSession(metadata)` | One run, starting at New Game. | Nothing to do: the SDK's session spans the page, and `run_started` marks the run. |
 | `trackEvent(name, properties)` | A successful action or lifecycle change, with the level, attempt and, for spatial events, a position. | `track()`, with nested values flattened (`position.x`). The level becomes `game_level.id` on every record. |
 | `trackEntity(entity)` | Character position and state. `properties.active: false` stops tracking. | A tracked object with the entity's ID and type; its other properties become object state, and the player's position goes on every event. An inactive entity is removed with its final position. |
+| `trackTeleport(from, to, reason)` | The player moved without walking: a retry puts them back at the level's start. | `recordTeleport()`, so paths break there instead of drawing a walk back to the start. |
 | `endSession(reason)` | Completed, quit or restarted. | Sends what is queued. |
 
 The SDK reads the recording from the page URL when Testing Floor opens the game for a recording, asks Testing Floor whether the recording is still open, and sends a completion marker when it ends. On `pagehide`, [`src/index.js`](../src/index.js) ends the run first and then closes the SDK, so `run_ended` goes out with the completion marker. SDK exceptions and rejected promises are isolated from gameplay. Ordinary tab switching only mutes sound and lets Phaser pause normally.
@@ -23,7 +24,7 @@ The SDK reads the recording from the page URL when Testing Floor opens the game 
 
 A run spans all three levels and any retries. Each level visit increments its own attempt number. A death produces one `player_died` and one `level_failed` event. A retry starts a new attempt in the same run. Defeating the last boss completes the level; completing Forest ends the run.
 
-The player has the stable entity ID `player`. Enemies and bosses use IDs containing level, attempt, group and spawn index, so a retry does not accidentally continue tracking a dead character from the previous attempt. Entity updates include name, health and active state. The player also includes ammo, velocity and whether they are grounded. Positions sample at **10 Hz** without emitting a catch-up burst after a stalled frame.
+The player has the stable entity ID `player`. Enemies and bosses use IDs containing level, attempt, group and spawn index, so a retry does not accidentally continue tracking a dead character from the previous attempt. Entity updates include name, health and active state. The player also includes ammo, velocity and whether they are grounded. Positions sample at **10 Hz** without emitting a catch-up burst after a stalled frame, and the SDK checks tracked objects at the same rate, its most, so a jump draws as an arc. A retry is recorded as a teleport from where the player died to the level's start.
 
 | Events | Useful questions |
 | --- | --- |

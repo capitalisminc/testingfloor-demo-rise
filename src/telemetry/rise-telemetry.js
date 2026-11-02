@@ -58,6 +58,13 @@ export class RiseTelemetry {
         name: enemy.name
       }))
     ]
+    // A retry, or a new game on the same level, puts the player back at the
+    // level's start. Recording that as a teleport keeps the path from showing
+    // a walk back from where the last attempt ended. A new level is drawn on
+    // its own map, so it needs none.
+    if (this.lastPlayer?.level === this.level) {
+      this.call('trackTeleport', this.lastPlayer.position, worldPosition(scene.player), this.attempt > 1 ? 'retry' : 'new_game')
+    }
     // Sample first, so the attempt's first event carries its own positions,
     // not where the previous attempt ended.
     this.sample()
@@ -75,6 +82,7 @@ export class RiseTelemetry {
 
   trackEntity (entry, active = true) {
     const object = entry.object
+    if (entry.type === 'player') this.lastPlayer = { level: this.level, position: worldPosition(object) }
     this.call('trackEntity', {
       entity_id: entry.id,
       entity_type: entry.type,
