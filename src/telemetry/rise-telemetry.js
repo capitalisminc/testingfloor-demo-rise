@@ -58,8 +58,10 @@ export class RiseTelemetry {
         name: enemy.name
       }))
     ]
-    this.event('level_started', { retry: this.attempt > 1 }, scene.player)
+    // Sample first, so the attempt's first event carries its own positions,
+    // not where the previous attempt ended.
     this.sample()
+    this.event('level_started', { retry: this.attempt > 1 }, scene.player)
   }
 
   event (name, properties = {}, entity) {

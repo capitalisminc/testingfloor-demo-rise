@@ -145,3 +145,28 @@ test('the Testing Floor adapter sends flat events and each entity as a tracked o
   assert.deepEqual(objects.flatMap(record => record['removed.id'] ?? []), ['desert:1:pest:0'], 'a defeated enemy is removed')
   assert.ok(objects.every(record => record['game_level.id'] === 'desert'))
 })
+
+test('a retry starts with the new attempt\'s player position, not the previous one\'s', () => {
+  const bodies = []
+  const client = new Client({
+    writeKey: 'test-only-never-transmitted',
+    flushIntervalSeconds: 1e9,
+    transport: (body, done) => { bodies.push(body); done(200) }
+  })
+  client.start(0)
+  const telemetry = new RiseTelemetry(new TestingFloorAdapter(client))
+  const scene = fixture()
+  telemetry.startLevel(scene)
+  scene.player.x = 200
+  scene.player.y = 300
+  telemetry.update(100)
+  telemetry.playerDied('fell')
+  scene.player.x = 40
+  scene.player.y = 960
+  telemetry.startLevel(scene)
+  client.flush()
+  const retry = bodies.flatMap(body => JSON.parse(body).events).filter(event => event.$name === 'level_started')[1]
+  assert.equal(retry.retry, true)
+  assert.equal(retry['player.position.x'], retry['position.x'])
+  assert.equal(retry['player.position.y'], retry['position.y'])
+})
