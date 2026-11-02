@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { LocalTelemetryStub } from '../src/telemetry/sdk-adapter.js'
+import { LocalTelemetryStub, TestingFloorAdapter } from '../src/telemetry/sdk-adapter.js'
+import { Client } from '../src/telemetry/testingfloor/client.ts'
 import { RiseTelemetry, worldPosition } from '../src/telemetry/rise-telemetry.js'
 
 function fixture (stage = 'desert', nextStage = 'forest') {
@@ -111,4 +112,36 @@ test('SDK failures never interrupt gameplay', async () => {
   await new Promise(resolve => setImmediate(resolve))
   assert.equal(telemetry.running, true)
   assert.ok(telemetry.adapterErrors >= 5)
+})
+
+test('the Testing Floor adapter sends flat events and each entity as a tracked object', () => {
+  let nowMs = 1767225600000
+  let seconds = 0
+  const bodies = []
+  const client = new Client({
+    writeKey: 'test-only-never-transmitted',
+    flushIntervalSeconds: 1e9,
+    clockMs: () => nowMs,
+    transport: (body, done) => { bodies.push(body); done(200) }
+  })
+  client.start(0)
+  const telemetry = new RiseTelemetry(new TestingFloorAdapter(client))
+  const scene = fixture()
+  telemetry.startLevel(scene)
+  const advance = ms => { nowMs += ms; seconds += ms / 1000; telemetry.update(ms); client.tick(seconds) }
+  advance(300)
+  telemetry.enemyDefeated(scene.pestGroup.getChildren()[0])
+  advance(300)
+  client.flush()
+  const sent = bodies.flatMap(body => JSON.parse(body).events)
+  const started = sent.find(event => event.$name === 'level_started')
+  assert.equal(started['position.y'], -930, 'nested positions are flattened')
+  assert.equal(started['game_level.id'], 'desert')
+  const defeated = sent.find(event => event.$name === 'enemy_defeated')
+  assert.equal(defeated['player.position.x'], 40, 'events after the first sample carry the player position')
+  const objects = sent.filter(event => event.$name === '$tf_objects')
+  const sampled = objects.flatMap(record => record['sample.id'] ?? [])
+  assert.ok(sampled.includes('player') && sampled.includes('desert:1:pest:0'), `entities are tracked: ${sampled}`)
+  assert.deepEqual(objects.flatMap(record => record['removed.id'] ?? []), ['desert:1:pest:0'], 'a defeated enemy is removed')
+  assert.ok(objects.every(record => record['game_level.id'] === 'desert'))
 })

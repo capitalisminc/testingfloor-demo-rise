@@ -2,13 +2,13 @@
 
 This fork of [zzox's rise](https://github.com/zzox/rise) is a browser-game reference for [Testing Floor](https://testingfloor.com): player and enemy tracking, gameplay events, level attempts, and maps that line up with recorded positions.
 
-The browser SDK is being built separately. For now, the integration records calls in a local stub so you can play, inspect the events, and see where an SDK plugs into a Phaser game.
+It sends through the [Testing Floor browser SDK](https://github.com/capitalisminc/testingfloor-sdk-browser) when the build has a telemetry write key. Without one, calls stay in a local stub so you can play and inspect the events offline.
 
 **[Play the example](https://capitalisminc.github.io/testingfloor-demo-rise/)** · [Testing Floor game and maps](https://testingfloor.com/orgs/example-studio/rise)
 
 ## Play locally
 
-Use Node.js 22.12 or newer:
+Use Node.js 22.18 or newer:
 
 ```sh
 npm ci
@@ -24,9 +24,9 @@ Open the local URL printed by Vite. Press **Enter** to start or confirm a menu c
 - Compare retries and progress through Desert, Desert / Forest and Forest.
 - Render each full level with `npm run maps`; PNGs and matching pixel-space bounds are in [`maps/`](maps/).
 
-In the browser console, use `riseTelemetry.snapshot()` to inspect calls or `riseTelemetry.download()` to save them as JSON. This stub keeps the latest 10,000 entries in memory and sends no telemetry. Reloading clears it.
+To send to Testing Floor, copy `.env.example` to `.env` and add a telemetry write key from your Testing Floor game before `npm start` or `npm run build`. Without a key, use `riseTelemetry.snapshot()` in the browser console to inspect calls or `riseTelemetry.download()` to save them as JSON; the stub keeps the latest 10,000 entries in memory and sends nothing.
 
-The [integration guide](docs/testing-floor.md) covers the gameplay hooks, SDK adapter, events and map coordinates. Replace [`createSdkAdapter()`](src/telemetry/sdk-adapter.js) when connecting the browser SDK. `npm run build` produces a static site in `dist/`.
+The [integration guide](docs/testing-floor.md) covers the gameplay hooks, the SDK adapter, events and map coordinates. `npm run build` produces a static site in `dist/`.
 
 Original game, music and art by **zzox (tyler)**. [Play the original](https://zzox.itch.io/rise). Code is [MIT licensed](LICENSE); assets are [CC BY 4.0](assets/LICENSE). This fork adds telemetry hooks, map exports and a current build setup.
 

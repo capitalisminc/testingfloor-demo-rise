@@ -2,24 +2,22 @@
 
 This example adds gameplay instrumentation to [rise](https://github.com/zzox/rise), a single-player Phaser platformer by zzox. Use it as a reference for placing events at the point where an action actually happens, tracking characters, and matching their positions to a level image.
 
-**The browser SDK is being developed separately.** This fork currently records calls into a local, bounded stub. It does not send telemetry or capture video. The game and maps are ready for the real SDK adapter.
+Telemetry goes through the [Testing Floor browser SDK](https://github.com/capitalisminc/testingfloor-sdk-browser), copied unmodified into [`src/telemetry/testingfloor`](../src/telemetry/testingfloor) from its commit `576b8ab`. The build sends to Testing Floor when `VITE_TESTING_FLOOR_WRITE_KEY` is set (see `.env.example`). Without a key, calls stay in a local, bounded stub and nothing is sent.
 
 ## Where to start
 
-- [`src/telemetry/sdk-adapter.js`](../src/telemetry/sdk-adapter.js): the replacement point for the browser SDK. It owns session and event delivery. The current `LocalTelemetryStub` implements the example's small interface; these method names are not a proposed public SDK API.
 - [`src/telemetry/rise-telemetry.js`](../src/telemetry/rise-telemetry.js): game-specific context, attempts, sampling, entity IDs, progress and coordinate conversion.
+- [`src/telemetry/sdk-adapter.js`](../src/telemetry/sdk-adapter.js): turns the example's four calls into SDK calls. These method names are the example's boundary, not the SDK's API.
 - [`GameScene`](../src/Scenes/GameScene.js), [`Player`](../src/Player/Player.js), and [`Enemies`](../src/Enemies): hooks where gameplay succeeds, fails or changes level.
 
-To connect an SDK, replace `createSdkAdapter()` with an adapter implementing these four calls:
+| Call | Meaning | With the SDK |
+| --- | --- | --- |
+| `startSession(metadata)` | One run, starting at New Game. | Nothing to do: the SDK's session spans the page, and `run_started` marks the run. |
+| `trackEvent(name, properties)` | A successful action or lifecycle change, with the level, attempt and, for spatial events, a position. | `track()`, with nested values flattened (`position.x`). The level becomes `game_level.id` on every record. |
+| `trackEntity(entity)` | Character position and state. `properties.active: false` stops tracking. | A tracked object with the entity's ID and type; its other properties become object state, and the player's position goes on every event. An inactive entity is removed with its final position. |
+| `endSession(reason)` | Completed, quit or restarted. | Sends what is queued. |
 
-| Call | Meaning |
-| --- | --- |
-| `startSession(metadata)` | One run, starting at New Game. Attach the SDK's identity and recording-sync integration here. |
-| `trackEvent(name, properties)` | A successful action or lifecycle change. Properties include the level and attempt, plus a position for spatial events. |
-| `trackEntity(entity)` | Character position and state. `properties.active: false` means stop tracking this entity. |
-| `endSession(reason)` | Completed, quit, restarted or page hidden/unloaded. |
-
-The browser SDK adapter should translate these calls into the SDK's actual API, including its own transport, timestamps, identity, batching and recording synchronization. SDK exceptions and rejected promises are isolated from gameplay. `pagehide` ends an open run; ordinary tab switching only mutes sound and lets Phaser pause normally.
+The SDK reads the recording from the page URL when Testing Floor opens the game for a recording, asks Testing Floor whether the recording is still open, and sends a completion marker when it ends or the page closes. SDK exceptions and rejected promises are isolated from gameplay. Ordinary tab switching only mutes sound and lets Phaser pause normally.
 
 ## Runs, levels and entities
 
@@ -36,16 +34,16 @@ The player has the stable entity ID `player`. Enemies and bosses use IDs contain
 | `player_attack`, `player_damaged`, `player_died` | Which weapons are used, and where do players take damage or fall behind the camera? |
 | `item_collected`, `enemy_defeated` | Which pickups are missed, and which enemies block progress? |
 
-## Inspecting the stub
+## Inspecting telemetry
 
 Play normally, then use the browser console:
 
 ```js
-riseTelemetry.snapshot() // session, events, entity samples and dropped-entry count
-riseTelemetry.download() // download the same data as JSON
+riseTelemetry.snapshot()
+riseTelemetry.download() // save the snapshot as JSON
 ```
 
-The stub keeps the latest **10,000 entries in memory** and sends no network requests. Reloading clears it. `sequence` and `timestamp` describe local stub calls, not a collector wire format. During `npm start`, `window.riseGame` also exposes the Phaser game for debugging; production builds omit that handle.
+With a write key, the snapshot shows whether the SDK is collecting, the attached recording, and pending and dropped events. Without one, it shows the stub's session, events, entity samples and dropped-entry count; the stub keeps the latest **10,000 entries in memory**, and reloading clears it. During `npm start`, `window.riseGame` also exposes the Phaser game for debugging; production builds omit that handle.
 
 ## Map coordinates
 
@@ -70,4 +68,4 @@ npm test
 npm run build
 ```
 
-`dist/` is a self-contained static site and works at a subdirectory URL. `npm run preview` serves the production build locally. Browser tests run with `npm run test:browser` after `npx playwright install chromium`; an installed Chrome can be used with `PLAYWRIGHT_CHANNEL=chrome npm run test:browser`.
+`dist/` is a self-contained static site and works at a subdirectory URL. `npm run preview` serves the production build locally. Browser tests run with `npm run test:browser` after `npx playwright install chromium`; an installed Chrome can be used with `PLAYWRIGHT_CHANNEL=chrome npm run test:browser`. One of them plays with a test write key and answers every request to Testing Floor itself, so nothing is sent.

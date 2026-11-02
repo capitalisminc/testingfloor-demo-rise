@@ -29,6 +29,8 @@ const config = {
 }
 
 const game = new Phaser.Game(config)
+// The SDK sends the engine with every record when the example sends to Testing Floor.
+if (telemetry.adapter.client) telemetry.adapter.client.engine = `Phaser ${Phaser.VERSION}`
 
 window.riseTelemetry = {
   snapshot: () => telemetry.adapter.snapshot(),

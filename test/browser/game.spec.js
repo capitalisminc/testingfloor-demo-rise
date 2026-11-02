@@ -96,7 +96,7 @@ test('all three levels load, map tiles align, bosses finish the run, and narrow 
   expect(snapshot.entries.filter(entry => entry.type === 'session_ended')).toHaveLength(1)
   expect(errors).toEqual([])
   await page.setViewportSize({ width: 375, height: 667 })
-  const canvas = await page.locator('canvas').boundingBox()
-  expect(canvas.width).toBeGreaterThan(0)
-  expect(canvas.width).toBeLessThanOrEqual(375)
+  // Phaser resizes the canvas after the window's resize event, not at once.
+  await expect.poll(async () => (await page.locator('canvas').boundingBox()).width).toBeLessThanOrEqual(375)
+  expect((await page.locator('canvas').boundingBox()).width).toBeGreaterThan(0)
 })
