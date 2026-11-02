@@ -244,3 +244,27 @@ test('a new game on the same level teleports on that level\'s map', () => {
   assert.equal(teleport?.['teleport.reason'], 'new_game')
   assert.equal(teleport['game_level.id'], 'desert')
 })
+
+test('the camera reaches Testing Floor as a 2D orthographic view below the HUD', () => {
+  const bodies = []
+  const client = new Client({
+    writeKey: 'test-only-never-transmitted',
+    flushIntervalSeconds: 1e9,
+    transport: (body, done) => { bodies.push(body); done(200) }
+  })
+  client.start(0)
+  const telemetry = new RiseTelemetry(new TestingFloorAdapter(client))
+  const scene = fixture()
+  scene.cameras = { main: { scrollX: 0, scrollY: 700, width: 480, height: 270 } }
+  telemetry.startLevel(scene)
+  client.flush()
+  const events = bodies.flatMap(body => JSON.parse(body).events)
+  const started = events.find(event => event.$name === 'level_started')
+  assert.deepEqual([started['camera.position.x'], started['camera.position.y']], [240, -820], 'the center of the visible world, in telemetry coordinates')
+  assert.equal(started['camera.ortho_width'], 480)
+  assert.equal(started['camera.forward.z'], -1)
+  assert.equal(started['camera.up.y'], 1)
+  const state = Object.assign({}, ...events.filter(event => event.$name === '$tf_state'))
+  assert.equal(state['camera.projection'], 'orthographic')
+  assert.deepEqual([state['viewport.width'], state['viewport.height']], [480, 240])
+})

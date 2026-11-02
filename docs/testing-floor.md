@@ -7,7 +7,7 @@ Telemetry goes through the [Testing Floor browser SDK](https://github.com/capita
 ## Where to start
 
 - [`src/telemetry/rise-telemetry.js`](../src/telemetry/rise-telemetry.js): game-specific context, attempts, sampling, entity IDs, progress and coordinate conversion.
-- [`src/telemetry/sdk-adapter.js`](../src/telemetry/sdk-adapter.js): turns the example's five calls into SDK calls. These method names are the example's boundary, not the SDK's API.
+- [`src/telemetry/sdk-adapter.js`](../src/telemetry/sdk-adapter.js): turns the example's six calls into SDK calls. These method names are the example's boundary, not the SDK's API.
 - [`GameScene`](../src/Scenes/GameScene.js), [`Player`](../src/Player/Player.js), and [`Enemies`](../src/Enemies): hooks where gameplay succeeds, fails or changes level.
 
 | Call | Meaning | With the SDK |
@@ -16,6 +16,7 @@ Telemetry goes through the [Testing Floor browser SDK](https://github.com/capita
 | `trackEvent(name, properties)` | A successful action or lifecycle change, with the level, attempt and, for spatial events, a position. | `track()`, with nested values flattened (`position.x`). The level becomes `game_level.id` on every record. |
 | `trackEntity(entity)` | Character position and state. `properties.active: false` stops tracking. | A tracked object with the entity's ID and type; its other properties become object state, and the player's position goes on every event. An inactive entity is removed with its final position. |
 | `trackTeleport(teleport)` | The player moved without walking: a retry puts them back at the level's start. | `recordTeleport()`, so paths break there instead of drawing a walk back to the start. |
+| `trackCamera(view)` | The part of the level on screen, sampled with the entities: its center, width and height below the HUD. | A 2D camera: orthographic, looking straight into the screen with +Y up, `camera.ortho_width` the view's width and the viewport its size. The map draws the view as a rectangle that follows the camera. |
 | `endSession(reason)` | Completed, quit or restarted. | Sends what is queued. |
 
 The SDK reads the recording from the page URL when Testing Floor opens the game for a recording, asks Testing Floor whether the recording is still open, and sends a completion marker when it ends. On `pagehide`, [`src/index.js`](../src/index.js) ends the run first and then closes the SDK, so `run_ended` goes out with the completion marker. SDK exceptions and rejected promises are isolated from gameplay. Ordinary tab switching only mutes sound and lets Phaser pause normally.

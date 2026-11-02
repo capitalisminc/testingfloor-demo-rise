@@ -5,7 +5,7 @@ import { createTestingFloor } from '@testingfloor/browser'
 const WRITE_KEY = import.meta.env?.VITE_TESTING_FLOOR_WRITE_KEY ?? ''
 
 // This is the example's boundary, not an SDK API: RiseTelemetry calls these
-// five methods, and the adapter turns them into Testing Floor SDK calls.
+// six methods, and the adapter turns them into Testing Floor SDK calls.
 export function createSdkAdapter () {
   if (!WRITE_KEY || typeof window === 'undefined') return new LocalTelemetryStub()
   // src/index.js closes the SDK on pagehide after the run's final events. The
@@ -31,14 +31,34 @@ export class TestingFloorAdapter {
     this.positions = new Map()
     this.level = null
     this.player = null
+    this.camera = null
     client.contextProvider = () => (this.level ? { 'game_level.id': this.level } : {})
-    client.activitySource = () => (this.player ? { playerPosition: this.player } : null)
+    client.activitySource = () => this.activity()
   }
 
-  // A new run starts without the previous run's level or player position.
+  // The player and, once a level has drawn, the 2D camera: an orthographic
+  // view looking straight into the screen, so the map shows the part of the
+  // level on screen as a rectangle.
+  activity () {
+    if (!this.player && !this.camera) return null
+    const activity = this.player ? { playerPosition: this.player } : {}
+    if (this.camera) {
+      Object.assign(activity, {
+        cameraPosition: this.camera.center,
+        cameraForward: { x: 0, y: 0, z: -1 },
+        cameraUp: { x: 0, y: 1, z: 0 },
+        cameraOrthoWidth: this.camera.width,
+        viewportSize: { width: this.camera.width, height: this.camera.height }
+      })
+    }
+    return activity
+  }
+
+  // A new run starts without the previous run's level, player position or camera.
   startSession () {
     this.level = null
     this.player = null
+    this.camera = null
   }
 
   trackEvent (name, properties) {
@@ -69,6 +89,10 @@ export class TestingFloorAdapter {
     if (level) this.level = level
     this.client.recordTeleport(from, to, reason)
     this.player = to
+  }
+
+  trackCamera (view) {
+    this.camera = view
   }
 
   endSession () {
@@ -139,6 +163,11 @@ export class LocalTelemetryStub {
     this.record('teleport', { teleport })
   }
 
+  // Kept as the latest view rather than an entry, since it changes every sample.
+  trackCamera (view) {
+    this.camera = view
+  }
+
   endSession (reason) {
     this.record('session_ended', { reason })
     this.sessionId = null
@@ -148,6 +177,7 @@ export class LocalTelemetryStub {
     return structuredClone({
       mode: 'local-stub',
       dropped_entries: this.droppedEntries,
+      camera: this.camera ?? null,
       entries: this.entries
     })
   }

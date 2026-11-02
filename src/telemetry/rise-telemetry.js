@@ -1,5 +1,5 @@
 import { createSdkAdapter } from './sdk-adapter.js'
-import { HUD_HEIGHT, worldPosition } from './coordinates.js'
+import { cameraView, HUD_HEIGHT, worldPosition } from './coordinates.js'
 export { worldPosition } from './coordinates.js'
 
 export const SAMPLE_INTERVAL_MS = 100
@@ -112,6 +112,8 @@ export class RiseTelemetry {
     for (const entry of this.entities) {
       if (entry.object.active && entry.object.alive) this.trackEntity(entry)
     }
+    const camera = this.scene?.cameras?.main
+    if (camera) this.call('trackCamera', cameraView(camera))
   }
 
   update (delta) {
