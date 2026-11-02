@@ -2,7 +2,7 @@
 
 This example adds gameplay instrumentation to [rise](https://github.com/zzox/rise), a single-player Phaser platformer by zzox. Use it as a reference for placing events at the point where an action actually happens, tracking characters, and matching their positions to a level image.
 
-Telemetry goes through the [Testing Floor browser SDK](https://github.com/capitalisminc/testingfloor-sdk-browser), the npm package `@testingfloor/browser`. The build sends to Testing Floor when `VITE_TESTING_FLOOR_WRITE_KEY` is set (see `.env.example`). Without a key, calls stay in a local, bounded stub and nothing is sent.
+Telemetry goes through the [Testing Floor browser SDK](https://github.com/capitalisminc/testingfloor-sdk-browser), the npm package `@testingfloor/browser`. The build sends to Testing Floor when `VITE_TESTING_FLOOR_WRITE_KEY` is set (see `.env.example`); the published example takes it from the repository's `TESTING_FLOOR_WRITE_KEY` Actions variable. A browser game's write key is part of its JavaScript, so it is not a secret. Without a key, calls stay in a local, bounded stub and nothing is sent.
 
 ## Where to start
 
