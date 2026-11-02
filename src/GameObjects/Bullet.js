@@ -1,3 +1,4 @@
+import Phaser from 'phaser'
 export default class Bullet extends Phaser.GameObjects.Sprite {
   constructor (scene) {
     super(scene)

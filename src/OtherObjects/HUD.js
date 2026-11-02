@@ -1,3 +1,4 @@
+import Phaser from 'phaser'
 // import { Geom } from 'phaser'
 
 export default class HUD {

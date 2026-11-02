@@ -1,5 +1,8 @@
+import Phaser from 'phaser'
 import Melee from '../GameObjects/Melee'
 import Gun from '../GameObjects/Gun'
+
+import { telemetry } from '../telemetry/rise-telemetry.js'
 
 export default class Boss extends Phaser.GameObjects.Sprite {
   constructor(config) {
@@ -544,6 +547,8 @@ export default class Boss extends Phaser.GameObjects.Sprite {
   }
 
   kill() {
+    if (!this.alive) return
+    telemetry.enemyDefeated(this)
     if(this.alive) {
       this.scene.bossesNum--
     }

@@ -1,3 +1,6 @@
+import Phaser from 'phaser'
+import { telemetry } from '../telemetry/rise-telemetry.js'
+
 export default class DeathScene extends Phaser.Scene {
   constructor(test) {
     super({ key: 'DeathScene' })
@@ -71,6 +74,7 @@ export default class DeathScene extends Phaser.Scene {
   }
 
   quitGame(){
+    telemetry.endRun('quit')
     this.clearKeys()
     this.scene.start('TitleScene')
   }

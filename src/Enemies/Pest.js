@@ -1,3 +1,6 @@
+import Phaser from 'phaser'
+import { telemetry } from '../telemetry/rise-telemetry.js'
+
 export default class Pest extends Phaser.GameObjects.Sprite {
   constructor(config) {
     super(config.scene, config.x, config.y - 16, config.key, config.name, config.details);    
@@ -142,6 +145,8 @@ export default class Pest extends Phaser.GameObjects.Sprite {
   }
 
   kill(){
+    if (!this.alive) return
+    telemetry.enemyDefeated(this)
     this.killAt = 500
     this.body.velocity.y = -500
     this.flipY = true

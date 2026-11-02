@@ -1,3 +1,5 @@
+import Phaser from 'phaser'
+import { telemetry } from '../telemetry/rise-telemetry.js'
 import Player from '../Player/Player'
 import Bullet from '../GameObjects/Bullet'
 import Pest from '../Enemies/Pest'
@@ -322,6 +324,9 @@ export default class GameScene extends Phaser.Scene {
     this.switching = false
 
     this.music = this.sound.playAudioSprite('soundtrack', this.stage, { loop: true })
+
+    telemetry.startLevel(this)
+    this.events.once('shutdown', () => telemetry.leaveLevel())
   }
 
   update(time, delta){
@@ -332,6 +337,7 @@ export default class GameScene extends Phaser.Scene {
       this.sound.playAudioSprite('soundtrack', 'win', { volume: 0.9 })
       this.cameras.main.fadeOut(1000)
       this.goingNext = true
+      telemetry.finishLevel('completed')
     }
 
     if (this.goingNext) {
@@ -377,7 +383,7 @@ export default class GameScene extends Phaser.Scene {
           this.deathPlayed = true
           this.sound.playAudioSprite('sfx', 'death', { volume: 0.6 })
         }
-        this.player.kill()
+        this.player.kill('fell_behind')
       }
 
     } else {
@@ -400,6 +406,7 @@ export default class GameScene extends Phaser.Scene {
         if(Math.abs(item.image.x - this.player.x) < 10 && Math.abs(item.image.y - this.player.y) < 16 && !item.taken){
           item.image.visible = false
           item.taken = true
+          telemetry.event('item_collected', { item_name: item.name, item_type: item.type }, item.image)
 
           let data = this.weaponsConfig[item.name]
 
@@ -432,6 +439,7 @@ export default class GameScene extends Phaser.Scene {
       }
     })
 
+    telemetry.update(delta)
     this.HUD.update()
 
     this.textGroup.map(text => text.update(delta, this.cameras.main.scrollY))

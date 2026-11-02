@@ -1,3 +1,4 @@
+import Phaser from 'phaser'
 export default class Melee extends Phaser.GameObjects.Sprite {
 	constructor(config){
 		super(config.scene, config.key, config.name, config.damage, config.blowback, config.swingStart, config.swingLow, config.swingHigh, config.possession)

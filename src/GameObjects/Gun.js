@@ -1,3 +1,4 @@
+import Phaser from 'phaser'
 export default class Gun extends Phaser.GameObjects.Sprite {
 	constructor (config) {
 		super(config.scene, config.key, config.name, config.player, config.from)

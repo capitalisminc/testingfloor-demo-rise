@@ -1,0 +1,59 @@
+[
+  {
+    "level_id": "desert",
+    "image": "desert.png",
+    "image_width": 1920,
+    "image_height": 3840,
+    "map_horizontal_axis": "x",
+    "map_vertical_axis": "y",
+    "map_unit": "px",
+    "default_voxel_size": 16,
+    "variant_key": "side",
+    "default_variant": true,
+    "app_version": "0.1.0",
+    "bounds": {
+      "center_x": 240,
+      "center_z": -480,
+      "size_x": 480,
+      "size_z": 960
+    }
+  },
+  {
+    "level_id": "desertForest",
+    "image": "desertForest.png",
+    "image_width": 1920,
+    "image_height": 4800,
+    "map_horizontal_axis": "x",
+    "map_vertical_axis": "y",
+    "map_unit": "px",
+    "default_voxel_size": 16,
+    "variant_key": "side",
+    "default_variant": true,
+    "app_version": "0.1.0",
+    "bounds": {
+      "center_x": 240,
+      "center_z": -600,
+      "size_x": 480,
+      "size_z": 1200
+    }
+  },
+  {
+    "level_id": "forest",
+    "image": "forest.png",
+    "image_width": 1920,
+    "image_height": 5760,
+    "map_horizontal_axis": "x",
+    "map_vertical_axis": "y",
+    "map_unit": "px",
+    "default_voxel_size": 16,
+    "variant_key": "side",
+    "default_variant": true,
+    "app_version": "0.1.0",
+    "bounds": {
+      "center_x": 240,
+      "center_z": -720,
+      "size_x": 480,
+      "size_z": 1440
+    }
+  }
+]

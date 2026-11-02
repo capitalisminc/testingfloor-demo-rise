@@ -1,3 +1,4 @@
+import Phaser from 'phaser'
 export default class BootScene extends Phaser.Scene {
   constructor(test) {
     super({
@@ -57,11 +58,12 @@ export default class BootScene extends Phaser.Scene {
     const w = 480
     const h = 270
     const availW = window.innerWidth
-    const availH = window.innerHeight
+    const availH = Math.max(1, window.innerHeight - 32)
     // - 20 for padding
     const maxW = Math.floor(availW / w)
     const maxH = Math.floor(availH / h)
-    const multi = maxW < maxH ? maxW : maxH
+    const fit = Math.min(availW / w, availH / h)
+    const multi = fit < 1 ? fit : Math.min(maxW, maxH)
 
     let canvas = document.getElementsByTagName('canvas')[0]
     canvas.style.width = `${multi * w}px`

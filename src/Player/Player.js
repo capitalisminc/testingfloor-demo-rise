@@ -1,3 +1,5 @@
+import Phaser from 'phaser'
+import { telemetry } from '../telemetry/rise-telemetry.js'
 import Melee from '../GameObjects/Melee'
 import Gun from '../GameObjects/Gun'
 
@@ -204,6 +206,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
 
     if(input.melee && !this.prevState.melee && this.hasMelee && !this.dashing && !this.dashWarming){
       this.meleeWeapon.swing(true)
+      telemetry.event('player_attack', { attack_type: 'melee', weapon: this.meleeWeapon.name }, this)
     } 
 
     if (!input.melee) {
@@ -221,6 +224,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
         this.shooting = true
         
         this.ammo--
+        telemetry.event('player_attack', { attack_type: 'ranged', weapon: this.gun.name, ammo_remaining: this.ammo }, this)
         this.lastFired = time + this.projFrequency
 
       }
@@ -238,6 +242,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
         let dir = this.body.blocked.left ? 1 : -1
 
         this.body.setVelocity(this.jumpVelocity * dir, this.jumpVelocity * -1.1)
+        telemetry.event('player_jump', { jump_type: 'wall' }, this)
         this.scene.sound.playAudioSprite('sfx', 'jump', { volume: .3 })
       }
     }
@@ -391,6 +396,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
       this.jumpTimer = 120
       this.jumping = true
       this.jumps++
+      telemetry.event('player_jump', { jump_type: 'ground' }, this)
 
       return
     }
@@ -400,6 +406,7 @@ export default class Player extends Phaser.GameObjects.Sprite {
       this.body.setVelocityY(-this.jumpVelocity / 1.5)
       this.jumpTimer = 120
       this.jumps++
+      telemetry.event('player_jump', { jump_type: 'air' }, this)
       this.scene.sound.playAudioSprite('sfx', 'jump', { volume: .2 })
       return
     }
@@ -425,12 +432,13 @@ export default class Player extends Phaser.GameObjects.Sprite {
       } else {
         player.body.setVelocity(damage * 100 * lrDir, damage * -5)  
       }
-      player.damage(damage)
+      player.damage(damage, enemy.name)
       player.hurt = true
     }
   }
 
   dash (dir, dashTime, dashTimer) {
+    telemetry.event('player_dash', { charge: Math.min(1, dashTime / dashTimer), direction: dir ? 'right' : 'left' }, this)
     this.dashTime = 0
     this.dashWarming = false
     dir = dir ? 1 : -1
@@ -448,14 +456,18 @@ export default class Player extends Phaser.GameObjects.Sprite {
     this.body.allowGravity = true
   }
 
-  damage(damage){
+  damage(damage, source = 'enemy'){
+    if (!this.alive) return
     this.health -= damage
-    if(this.health <= 0) this.kill()
+    telemetry.event('player_damaged', { damage, source, health_remaining: Math.max(0, this.health) }, this)
+    if(this.health <= 0) this.kill('health_depleted')
 
     this.scene.sound.playAudioSprite('sfx', 'player-hurt', { volume: .2 })
   }
 
-  kill() {
+  kill(cause = 'unknown') {
+    if (!this.alive) return
     this.alive = false
+    telemetry.playerDied(cause)
   }
 }
