@@ -15,7 +15,7 @@ Telemetry goes through the [Testing Floor browser SDK](https://github.com/capita
 | `startSession(metadata)` | One run, starting at New Game. | Nothing to do: the SDK's session spans the page, and `run_started` marks the run. |
 | `trackEvent(name, properties)` | A successful action or lifecycle change, with the level, attempt and, for spatial events, a position. | `track()`, with nested values flattened (`position.x`). The level becomes `game_level.id` on every record. |
 | `trackEntity(entity)` | Character position and state. `properties.active: false` stops tracking. | A tracked object with the entity's ID and type; its other properties become object state, and the player's position goes on every event. An inactive entity is removed with its final position. |
-| `trackTeleport(from, to, reason)` | The player moved without walking: a retry puts them back at the level's start. | `recordTeleport()`, so paths break there instead of drawing a walk back to the start. |
+| `trackTeleport(teleport)` | The player moved without walking: a retry puts them back at the level's start. | `recordTeleport()`, so paths break there instead of drawing a walk back to the start. |
 | `endSession(reason)` | Completed, quit or restarted. | Sends what is queued. |
 
 The SDK reads the recording from the page URL when Testing Floor opens the game for a recording, asks Testing Floor whether the recording is still open, and sends a completion marker when it ends. On `pagehide`, [`src/index.js`](../src/index.js) ends the run first and then closes the SDK, so `run_ended` goes out with the completion marker. SDK exceptions and rejected promises are isolated from gameplay. Ordinary tab switching only mutes sound and lets Phaser pause normally.

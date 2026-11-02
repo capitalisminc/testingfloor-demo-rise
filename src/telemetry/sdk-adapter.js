@@ -54,7 +54,10 @@ export class TestingFloorAdapter {
   }
 
   // The player moved without walking, such as respawning at a level's start.
-  trackTeleport (from, to, reason) {
+  // The level is set first: a new game's teleport comes before its
+  // level_started, and startSession has cleared the level by then.
+  trackTeleport ({ level_id: level, from, to, reason }) {
+    if (level) this.level = level
     this.client.recordTeleport(from, to, reason)
     this.player = to
   }
@@ -123,8 +126,8 @@ export class LocalTelemetryStub {
     this.record('entity', { entity })
   }
 
-  trackTeleport (from, to, reason) {
-    this.record('teleport', { from, to, reason })
+  trackTeleport (teleport) {
+    this.record('teleport', { teleport })
   }
 
   endSession (reason) {

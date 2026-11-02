@@ -63,7 +63,12 @@ export class RiseTelemetry {
     // a walk back from where the last attempt ended. A new level is drawn on
     // its own map, so it needs none.
     if (this.lastPlayer?.level === this.level) {
-      this.call('trackTeleport', this.lastPlayer.position, worldPosition(scene.player), this.attempt > 1 ? 'retry' : 'new_game')
+      this.call('trackTeleport', {
+        level_id: this.level,
+        from: this.lastPlayer.position,
+        to: worldPosition(scene.player),
+        reason: this.attempt > 1 ? 'retry' : 'new_game'
+      })
     }
     // Sample first, so the attempt's first event carries its own positions,
     // not where the previous attempt ended.

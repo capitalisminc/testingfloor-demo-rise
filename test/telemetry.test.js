@@ -219,3 +219,28 @@ test('a retry teleports the player back to the start instead of walking there', 
   const order = sent.map(event => event.$name)
   assert.ok(order.indexOf('player_teleported') < order.lastIndexOf('level_started'), 'the teleport comes before the retry starts')
 })
+
+test('a new game on the same level teleports on that level\'s map', () => {
+  const bodies = []
+  const client = new Client({
+    writeKey: 'test-only-never-transmitted',
+    flushIntervalSeconds: 1e9,
+    transport: (body, done) => { bodies.push(body); done(200) }
+  })
+  client.start(0)
+  const telemetry = new RiseTelemetry(new TestingFloorAdapter(client))
+  const scene = fixture()
+  telemetry.startLevel(scene)
+  scene.player.x = 200
+  scene.player.y = 300
+  telemetry.update(100)
+  telemetry.endRun('quit')
+  scene.player.x = 40
+  scene.player.y = 960
+  telemetry.startRun()
+  telemetry.startLevel(scene)
+  client.flush()
+  const teleport = bodies.flatMap(body => JSON.parse(body).events).find(event => event.$name === 'player_teleported')
+  assert.equal(teleport?.['teleport.reason'], 'new_game')
+  assert.equal(teleport['game_level.id'], 'desert')
+})
