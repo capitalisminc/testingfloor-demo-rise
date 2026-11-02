@@ -38,6 +38,10 @@ test('gameplay reaches Testing Floor tagged with the recording, which completes 
   expect(started.$tf.recording_uuid).toBe('example-recording')
   expect(started.$tf.engine).toMatch(/^Phaser \d/)
   expect(started['game_level.id']).toBeTruthy()
+  // The 2D camera: the map draws the part of the level on screen around the player.
+  expect(started['camera.ortho_width']).toBe(480)
+  expect(started['camera.forward.z']).toBe(-1)
+  expect(Math.abs(started['camera.position.y'] - started['position.y'])).toBeLessThan(240)
   await expect.poll(() => events.some(event => event.$name === '$tf_objects' && event['sample.id']?.includes('player'))).toBe(true)
   expect(await page.evaluate(() => window.riseTelemetry.snapshot().mode)).toBe('testing-floor')
 
