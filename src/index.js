@@ -29,6 +29,8 @@ const config = {
 }
 
 const game = new Phaser.Game(config)
+// The SDK sends the engine with every record when the example sends to Testing Floor.
+if (telemetry.adapter.client) telemetry.adapter.client.engine = `Phaser ${Phaser.VERSION}`
 
 window.riseTelemetry = {
   snapshot: () => telemetry.adapter.snapshot(),
@@ -44,7 +46,11 @@ window.riseTelemetry = {
 }
 
 if (import.meta.env.DEV) window.riseGame = game
-window.addEventListener('pagehide', () => telemetry.endRun('page_hidden'))
+window.addEventListener('pagehide', () => {
+  telemetry.endRun('page_hidden')
+  // Closing after the run's final events sends them with the completion marker.
+  telemetry.adapter.client?.close()
+})
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) game.sound.mute = true
   else game.sound.mute = document.getElementById('mute').getAttribute('aria-pressed') === 'true'
