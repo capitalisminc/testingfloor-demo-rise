@@ -5,11 +5,13 @@ import { createTestingFloor } from '@testingfloor/browser'
 const WRITE_KEY = import.meta.env?.VITE_TESTING_FLOOR_WRITE_KEY ?? ''
 
 // This is the example's boundary, not an SDK API: RiseTelemetry calls these
-// four methods, and the adapter turns them into Testing Floor SDK calls.
+// five methods, and the adapter turns them into Testing Floor SDK calls.
 export function createSdkAdapter () {
   if (!WRITE_KEY || typeof window === 'undefined') return new LocalTelemetryStub()
-  // src/index.js closes the SDK on pagehide after the run's final events.
-  return new TestingFloorAdapter(createTestingFloor({ writeKey: WRITE_KEY, appVersion: '0.1.0', closeOnPageHide: false }))
+  // src/index.js closes the SDK on pagehide after the run's final events. A
+  // jump lasts about half a second, so tracked objects are checked ten times a
+  // second, the SDK's most, to draw jumps as arcs rather than straight lines.
+  return new TestingFloorAdapter(createTestingFloor({ writeKey: WRITE_KEY, appVersion: '0.1.0', closeOnPageHide: false, objectChecksPerSecond: 10 }))
 }
 
 // Sends through the Testing Floor browser SDK. A run is marked by the
@@ -49,6 +51,15 @@ export class TestingFloorAdapter {
     for (const [key, value] of Object.entries(properties)) {
       if (key !== 'active' && value !== undefined && value !== null) this.client.setObjectState(id, key, value)
     }
+  }
+
+  // The player moved without walking, such as respawning at a level's start.
+  // The level is set first: a new game's teleport comes before its
+  // level_started, and startSession has cleared the level by then.
+  trackTeleport ({ level_id: level, from, to, reason }) {
+    if (level) this.level = level
+    this.client.recordTeleport(from, to, reason)
+    this.player = to
   }
 
   endSession () {
@@ -113,6 +124,10 @@ export class LocalTelemetryStub {
 
   trackEntity (entity) {
     this.record('entity', { entity })
+  }
+
+  trackTeleport (teleport) {
+    this.record('teleport', { teleport })
   }
 
   endSession (reason) {

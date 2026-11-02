@@ -189,3 +189,58 @@ test('a new run does not carry the previous run\'s level or player position', ()
   assert.equal(started['game_level.id'], undefined)
   assert.equal(started['player.position.x'], undefined)
 })
+
+test('a retry teleports the player back to the start instead of walking there', () => {
+  const bodies = []
+  const client = new Client({
+    writeKey: 'test-only-never-transmitted',
+    flushIntervalSeconds: 1e9,
+    transport: (body, done) => { bodies.push(body); done(200) }
+  })
+  client.start(0)
+  const telemetry = new RiseTelemetry(new TestingFloorAdapter(client))
+  const scene = fixture()
+  telemetry.startLevel(scene)
+  scene.player.x = 200
+  scene.player.y = 300
+  telemetry.update(100)
+  telemetry.playerDied('fell')
+  scene.player.x = 40
+  scene.player.y = 960
+  telemetry.startLevel(scene)
+  telemetry.startLevel(fixture('forest', 'end'))
+  client.flush()
+  const sent = bodies.flatMap(body => JSON.parse(body).events)
+  const teleports = sent.filter(event => event.$name === 'player_teleported')
+  assert.equal(teleports.length, 1, 'only the retry teleports; a new level starts on another map')
+  assert.equal(teleports[0]['teleport.reason'], 'retry')
+  assert.deepEqual([teleports[0]['teleport.start.position.x'], teleports[0]['teleport.start.position.y']], [200, -270])
+  assert.deepEqual([teleports[0]['teleport.end.position.x'], teleports[0]['teleport.end.position.y']], [40, -930])
+  const order = sent.map(event => event.$name)
+  assert.ok(order.indexOf('player_teleported') < order.lastIndexOf('level_started'), 'the teleport comes before the retry starts')
+})
+
+test('a new game on the same level teleports on that level\'s map', () => {
+  const bodies = []
+  const client = new Client({
+    writeKey: 'test-only-never-transmitted',
+    flushIntervalSeconds: 1e9,
+    transport: (body, done) => { bodies.push(body); done(200) }
+  })
+  client.start(0)
+  const telemetry = new RiseTelemetry(new TestingFloorAdapter(client))
+  const scene = fixture()
+  telemetry.startLevel(scene)
+  scene.player.x = 200
+  scene.player.y = 300
+  telemetry.update(100)
+  telemetry.endRun('quit')
+  scene.player.x = 40
+  scene.player.y = 960
+  telemetry.startRun()
+  telemetry.startLevel(scene)
+  client.flush()
+  const teleport = bodies.flatMap(body => JSON.parse(body).events).find(event => event.$name === 'player_teleported')
+  assert.equal(teleport?.['teleport.reason'], 'new_game')
+  assert.equal(teleport['game_level.id'], 'desert')
+})
