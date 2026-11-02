@@ -24,7 +24,7 @@ The SDK reads the recording from the page URL when Testing Floor opens the game 
 
 A run spans all three levels and any retries. Each level visit increments its own attempt number. A death produces one `player_died` and one `level_failed` event. A retry starts a new attempt in the same run. Defeating the last boss completes the level; completing Forest ends the run.
 
-The player has the stable entity ID `player`. Enemies and bosses use IDs containing level, attempt, group and spawn index, so a retry does not accidentally continue tracking a dead character from the previous attempt. Entity updates include name, health and active state. The player also includes ammo, velocity and whether they are grounded. Positions sample at **10 Hz** without emitting a catch-up burst after a stalled frame, and the SDK checks tracked objects at the same rate, its most, so a jump draws as an arc. A retry is recorded as a teleport from where the player died to the level's start.
+The player has the stable entity ID `player`. Enemies and bosses use IDs containing level, attempt, group and spawn index, so a retry does not accidentally continue tracking a dead character from the previous attempt. Entity updates include name, health and active state. The player also includes ammo, velocity and whether they are grounded. Positions sample at **10 Hz** without emitting a catch-up burst after a stalled frame, and the SDK checks tracked objects at the same rate, its most. The map draws the player's path from movement samples (`player_moved`), which the SDK sends from the player's position up to ten times a second, so a jump draws as an arc. A retry is recorded as a teleport from where the player died to the level's start.
 
 | Events | Useful questions |
 | --- | --- |

@@ -8,10 +8,19 @@ const WRITE_KEY = import.meta.env?.VITE_TESTING_FLOOR_WRITE_KEY ?? ''
 // five methods, and the adapter turns them into Testing Floor SDK calls.
 export function createSdkAdapter () {
   if (!WRITE_KEY || typeof window === 'undefined') return new LocalTelemetryStub()
-  // src/index.js closes the SDK on pagehide after the run's final events. A
-  // jump lasts about half a second, so tracked objects are checked ten times a
-  // second, the SDK's most, to draw jumps as arcs rather than straight lines.
-  return new TestingFloorAdapter(createTestingFloor({ writeKey: WRITE_KEY, appVersion: '0.1.0', closeOnPageHide: false, objectChecksPerSecond: 10 }))
+  // src/index.js closes the SDK on pagehide after the run's final events. The
+  // player's path on Testing Floor's map comes from movement samples
+  // (player_moved). A jump lasts about half a second, so movement is sampled up
+  // to ten times a second, and tracked objects are checked as often, the SDK's
+  // most, to draw jumps as arcs rather than straight lines.
+  return new TestingFloorAdapter(createTestingFloor({
+    writeKey: WRITE_KEY,
+    appVersion: '0.1.0',
+    closeOnPageHide: false,
+    objectChecksPerSecond: 10,
+    movementTracking: true,
+    movementMinPingInterval: 0.1
+  }))
 }
 
 // Sends through the Testing Floor browser SDK. A run is marked by the

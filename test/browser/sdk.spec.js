@@ -61,3 +61,21 @@ test('leaving the page mid-run sends the run ending and completes the recording'
   expect(events.find(event => event.$name === 'level_abandoned')).toBeTruthy()
   expect(testingFloor.errors).toEqual([])
 })
+
+test('jumping sends the player path about ten times a second', async ({ page }) => {
+  const testingFloor = await playRecorded(page)
+  const { events } = testingFloor
+  await expect.poll(() => events.find(event => event.$name === 'level_started')).toBeTruthy()
+  for (let jump = 0; jump < 3; jump++) {
+    await page.keyboard.down('j')
+    await page.waitForTimeout(150)
+    await page.keyboard.up('j')
+    await page.waitForTimeout(650)
+  }
+  // Three jumps last about two seconds; at most two samples a second would
+  // leave each arc as a straight line.
+  await expect.poll(() => events.filter(event => event.$name === 'player_moved').length).toBeGreaterThanOrEqual(10)
+  const heights = new Set(events.filter(event => event.$name === 'player_moved').map(event => event['player.position.y']))
+  expect(heights.size).toBeGreaterThanOrEqual(5)
+  expect(testingFloor.errors).toEqual([])
+})
